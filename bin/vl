@@ -13,8 +13,10 @@ options = {
   :justify => 'l'
 }
 
-OptionParser.new do |opts|
-  opts.banner = 'Usage: example.rb [options]'
+opts = OptionParser.new do |opts|
+  opts.program_name = "(V)iew (L)arge table"
+  opts.banner =  "Usage: vl FILENAME [options]"
+  opts.separator '       vll FILENAME [options]'
   opts.separator ''
   opts.separator 'Options:'
   opts.separator '-' * 80
@@ -48,7 +50,7 @@ OptionParser.new do |opts|
     options[:probe_lines] = p.to_i
   end
 
-  opts.on('-j', '--justify [JUSTIFY]',
+  opts.on('-j', '--justify [CODE]',
           'justification mode for cells',
           '  auto will only right-justify numbers',
           '  options: l = left, r = right, a = auto',
@@ -71,10 +73,14 @@ OptionParser.new do |opts|
       puts "Warning: Default value \"#{options[:comment].source}\" is used."
     end
   end
-end.parse!
+end
+
+opts.parse!
 
 if ARGV.empty?
-  abort 'Error: No filename found.'
+  puts 'Error: No filename found.'
+  puts opts
+  abort
 else
   file_name = ARGV[0]
 end
