@@ -15,6 +15,7 @@ options = {
 
 opts = OptionParser.new do |opts|
   opts.program_name = "(V)iew (L)arge table"
+  opts.version = "0.0.1"
   opts.banner =  "Usage: vl FILENAME [options]"
   opts.separator '       vll FILENAME [options]'
   opts.separator ''
