@@ -1,3 +1,6 @@
+#!/usr/bin/env ruby
+begin
+
 require 'optparse'
 require 'pp'
 
@@ -119,4 +122,10 @@ f_iter.with_index do |line, lnum|
     end
   end
   print "\n" rescue break
+end
+
+rescue Interrupt
+  # avoid awkward system prompt
+  print "\n"
+
 end
