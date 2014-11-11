@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
-  spec.name          = "vl"
-  spec.version       = "0.0.1"
+  spec.name          = "vll"
+  spec.version       = "0.0.2"
   spec.authors       = ["xzhu"]
   spec.email         = ["zhuxun2@gmail.com"]
   spec.summary       = "(V)iew (L)arge table. Format large table in a split of a second"
