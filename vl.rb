@@ -6,7 +6,8 @@ options = {
   :padding => 1,
   :skip => 0,
   :comment => /^#/,
-  :probe_lines => 100
+  :probe_lines => 100,
+  :justify => 'l'
 }
 
 OptionParser.new do |opts|
@@ -43,6 +44,19 @@ OptionParser.new do |opts|
           '  default: 100') do |p|
     options[:probe_lines] = p.to_i
   end
+
+  opts.on('-j', '--justify [JUSTIFY]',
+          'justification mode for cells',
+          '  auto will only right-justify numbers',
+          '  options: l = left, r = right, a = auto',
+          '  default: l') do |j|
+    if ['l', 'r', 'a'].include?(j[0])
+      options[:justify] = j[0]
+    else
+      puts 'Warning: Unrecognized justify option.'
+      puts "Warning: Default value \"#{options[:justify]}\" is used"
+    end
+  end
           
   opts.on('-c', '--comment [REGEX]',
           'regex to match lines to ignore',
@@ -65,8 +79,6 @@ end
 if !File.exists? file_name
   abort "Error: file \"#{file_name}\" not found."
 end
-
-# TODO: add an option for choosing left or right justify
 
 max_widths = []
 
@@ -93,7 +105,18 @@ f_iter.with_index do |line, lnum|
   end
   line.chomp.split(options[:separator]).each_with_index do |c, i|
     if max_widths.fetch(i, -1) < c.length then max_widths[i] = c.length end
-    print c.ljust(max_widths[i] + options[:padding]) rescue break
+    case options[:justify]
+    when 'l'
+      print c.ljust(max_widths[i] + options[:padding]) rescue break
+    when 'r'
+      print c.rjust(max_widths[i] + options[:padding]) rescue break
+    when 'a'
+      begin
+        if Float(c) then print c.rjust(max_widths[i] + options[:padding]) end
+      rescue
+        print c.ljust(max_widths[i] + options[:padding])
+      end
+    end
   end
   print "\n" rescue break
 end
