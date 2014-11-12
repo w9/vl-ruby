@@ -92,23 +92,32 @@ end
 
 max_widths = []
 
-f_iter = File.foreach(file_name)
+file = open file_name
 
-lnum = 0
-options[:probe_lines].times do
-  begin
-    line = f_iter.next rescue break
-    lnum += 1
-  end while lnum < options[:skip] or line =~ options[:comment]
+file.each_line.with_index.reduce 0 do |pnum, (line, lnum)|
+  next pnum if lnum < options[:skip] or line =~ options[:comment]
   line.chomp.split(options[:separator]).each_with_index do |c, i|
     # -1 because it's possible that c is empty and i is out of range
     if max_widths.fetch(i, -1) < c.length then max_widths[i] = c.length end
   end
+  (pnum += 1) < options[:probe_lines] ? pnum : break
 end
-  
-f_iter.rewind
 
-f_iter.with_index do |line, lnum|
+#lnum = 0
+#options[:probe_lines].times do
+#  begin
+#    line = file.next rescue break
+#    lnum += 1
+#  end while lnum < options[:skip] or line =~ options[:comment]
+#  line.chomp.split(options[:separator]).each_with_index do |c, i|
+#    # -1 because it's possible that c is empty and i is out of range
+#    if max_widths.fetch(i, -1) < c.length then max_widths[i] = c.length end
+#  end
+#end
+  
+file.rewind
+
+file.each_line.with_index do |line, lnum|
   if lnum < options[:skip] or line =~ options[:comment] then
     print line
     next
