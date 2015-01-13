@@ -106,7 +106,12 @@ cached_lines = []
 ARGF.each_line.with_index.reduce 0 do |pnum, (line, lnum)|
   cached_lines.push(line)
   next pnum if lnum < $options[:skip] or line =~ $options[:comment]
-  CSV.parse_line(line, {:col_sep=>$options[:separator]}).each_with_index do |c, i|
+  parsed_line = CSV.parse_line(line, {:col_sep=>$options[:separator]})
+  # damn you, 'csv' package!
+  parsed_line = [] if parsed_line == nil
+  parsed_line.each_with_index do |c, i|
+    # damn you, 'csv' package!
+    c = '' if c == nil
     # -1 because it's possible that c is empty and i is out of range
     if $max_widths.fetch(i, -1) < c.length then $max_widths[i] = c.length end
   end
@@ -120,7 +125,13 @@ def print_line(line, lnum)
     print line
     return
   end
-  CSV.parse_line(line, {:col_sep=>$options[:separator]}).each_with_index do |c, i|
+  parsed_line = CSV.parse_line(line, {:col_sep=>$options[:separator]})
+  # damn you, 'csv' package!
+  parsed_line = [] if parsed_line == nil
+  parsed_line.each_with_index do |c, i|
+    # damn you, 'csv' package!
+    c = '' if c == nil
+    c = '' if c == nil
     if $max_widths.fetch(i, -1) < c.length then $max_widths[i] = c.length end
     case $options[:justify]
     when 'l'
