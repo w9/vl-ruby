@@ -2,10 +2,10 @@
 begin
 
 require 'optparse'
-require 'pp'
+require 'csv'
 
-options = {
-  :separator => /[,\t]/,
+$options = {
+  :separator => "",
   :padding => 1,
   :skip => 0,
   :comment => /^#/,
@@ -13,42 +13,47 @@ options = {
   :justify => 'l'
 }
 
+
 opts = OptionParser.new do |opts|
-  opts.program_name = "(V)iew (L)arge table"
-  opts.version = "0.0.1"
-  opts.banner =  "Usage: vl FILENAME [options]"
+  opts.program_name = '(V)iew (L)arge table'
+  opts.version = '20150113'
+
+  opts.banner = '(V)iew (L)arge table: lightning fast table formatter'
+  opts.separator ''
+  opts.separator '   output to stdout:'
+  opts.separator '       vl FILENAME [options]'
+  opts.separator '   pipe to less:'
   opts.separator '       vll FILENAME [options]'
   opts.separator ''
   opts.separator 'Options:'
-  opts.separator '-' * 80
 
   opts.on('-s', '--separator [REGEX]',
-          'regex to match the separator',
-          '  default: [,\t]') do |s|
+          'char or string to match the separator',
+          '  default: "," (if csv, "\t")') do |s|
     begin
       options[:separator] = Regexp.new(s)
     rescue
       puts 'Warning: Problems encountered when processing the regex.'
-      puts "Warning: Default value \"#{options[:separator].source}\" is used."
+      puts "Warning: Default value \"#{$options[:separator].source}\" is used."
     end
   end
 
   opts.on('-p', '--padding [NUM_OF_SPACES]',
           'number of spaces that separate the columns',
           '  default: 1') do |p|
-    options[:padding] = p.to_i
+    $options[:padding] = p.to_i
   end
 
   opts.on('-k', '--skip [NUM_OF_LINES]',
           'number of top lines to skip',
           '  default: 0') do |k|
-    options[:skip] = k.to_i
+    $options[:skip] = k.to_i
   end
 
   opts.on('-p', '--probe-lines [NUM_OF_LINES]',
           'number of top lines used for fast estimation',
           '  default: 100') do |p|
-    options[:probe_lines] = p.to_i
+    $options[:probe_lines] = p.to_i
   end
 
   opts.on('-j', '--justify [CODE]',
@@ -57,10 +62,10 @@ opts = OptionParser.new do |opts|
           '  options: l = left, r = right, a = auto',
           '  default: l') do |j|
     if ['l', 'r', 'a'].include?(j[0])
-      options[:justify] = j[0]
+      $options[:justify] = j[0]
     else
       puts 'Warning: Unrecognized justify option.'
-      puts "Warning: Default value \"#{options[:justify]}\" is used"
+      puts "Warning: Default value \"#{$options[:justify]}\" is used"
     end
   end
           
@@ -68,74 +73,93 @@ opts = OptionParser.new do |opts|
           'regex to match lines to ignore',
           '  default: ^#') do |c|
     begin
-      options[:comment] = Regexp.new(c)
+      $options[:comment] = Regexp.new(c)
     rescue
       puts 'Warning: Problems encountered when processing the regex.'
-      puts "Warning: Default value \"#{options[:comment].source}\" is used."
+      puts "Warning: Default value \"#{$options[:comment].source}\" is used."
     end
   end
 end
 
 opts.parse!
 
-#if ARGF
-#  puts 'Error: No filename found.'
-#  puts opts
-#  abort
-#end
-
-max_widths = []
-
-file = ARGF.file
-
-file.each_line.with_index.reduce 0 do |pnum, (line, lnum)|
-  next pnum if lnum < options[:skip] or line =~ options[:comment]
-  line.chomp.split(options[:separator]).each_with_index do |c, i|
-    # -1 because it's possible that c is empty and i is out of range
-    if max_widths.fetch(i, -1) < c.length then max_widths[i] = c.length end
+#default separator
+if $options[:separator] == ''
+  if ARGF.filename =~ /.*\.csv/
+    $options[:separator] = ','
+  else
+    $options[:separator] = "\t"
   end
-  (pnum += 1) < options[:probe_lines] ? pnum : break
 end
 
-#lnum = 0
-#options[:probe_lines].times do
-#  begin
-#    line = file.next rescue break
-#    lnum += 1
-#  end while lnum < options[:skip] or line =~ options[:comment]
-#  line.chomp.split(options[:separator]).each_with_index do |c, i|
-#    # -1 because it's possible that c is empty and i is out of range
-#    if max_widths.fetch(i, -1) < c.length then max_widths[i] = c.length end
-#  end
-#end
-  
-file.rewind
+#------#
+# Main #
+#------#
 
-file.each_line.with_index do |line, lnum|
-  if lnum < options[:skip] or line =~ options[:comment] then
-    print line
-    next
+
+$max_widths = []
+
+#==== line caching ====#
+cached_lines = []
+ARGF.each_line.with_index.reduce 0 do |pnum, (line, lnum)|
+  cached_lines.push(line)
+  next pnum if lnum < $options[:skip] or line =~ $options[:comment]
+  parsed_line = CSV.parse_line(line, {:col_sep=>$options[:separator]})
+  # damn you, 'csv' package!
+  parsed_line = [] if parsed_line == nil
+  parsed_line.each_with_index do |c, i|
+    # damn you, 'csv' package!
+    c = '' if c == nil
+    # -1 because it's possible that c is empty and i is out of range
+    if $max_widths.fetch(i, -1) < c.length then $max_widths[i] = c.length end
   end
-  line.chomp.split(options[:separator]).each_with_index do |c, i|
-    if max_widths.fetch(i, -1) < c.length then max_widths[i] = c.length end
-    case options[:justify]
+  (pnum += 1) < $options[:probe_lines] ? pnum : break
+end
+#======================#
+
+
+def print_line(line, lnum)
+  if lnum < $options[:skip] or line =~ $options[:comment] then
+    print line
+    return
+  end
+  parsed_line = CSV.parse_line(line, {:col_sep=>$options[:separator]})
+  # damn you, 'csv' package!
+  parsed_line = [] if parsed_line == nil
+  parsed_line.each_with_index do |c, i|
+    # damn you, 'csv' package!
+    c = '' if c == nil
+    if $max_widths.fetch(i, -1) < c.length then $max_widths[i] = c.length end
+    case $options[:justify]
     when 'l'
-      print c.ljust(max_widths[i] + options[:padding]) rescue break
+      print c.ljust($max_widths[i] + $options[:padding]) rescue break
     when 'r'
-      print c.rjust(max_widths[i] + options[:padding]) rescue break
+      print c.rjust($max_widths[i] + $options[:padding]) rescue break
     when 'a'
       begin
-        if Float(c) then print c.rjust(max_widths[i] + options[:padding]) end
+        if Float(c) then print c.rjust($max_widths[i] + $options[:padding]) end
       rescue
-        print c.ljust(max_widths[i] + options[:padding])
+        print c.ljust($max_widths[i] + $options[:padding])
       end
     end
   end
-  print "\n" rescue break
+  puts
+rescue
+  STDERR.puts 'vl: Pipe ended while writing.'
+  abort
 end
 
+cached_lines.each.with_index do |line, lnum|
+  print_line(line, lnum)
+end
+
+ARGF.each_line.with_index do |line, lnum|
+  print_line(line, lnum)
+end
+
+
+
+
 rescue Interrupt
-  # avoid awkward system prompt
-  print "\n"
 
 end
