@@ -15,9 +15,10 @@ $options = {
 
 
 opts = OptionParser.new do |opts|
-  opts.program_name = "(V)iew (L)arge table"
+  opts.program_name = '(V)iew (L)arge table'
+  opts.version = '20150113'
 
-  opts.banner = "(V)iew (L)arge table: lightning fast table formatter"
+  opts.banner = '(V)iew (L)arge table: lightning fast table formatter'
   opts.separator ''
   opts.separator '   output to stdout:'
   opts.separator '       vl FILENAME [options]'
@@ -131,7 +132,6 @@ def print_line(line, lnum)
   parsed_line.each_with_index do |c, i|
     # damn you, 'csv' package!
     c = '' if c == nil
-    c = '' if c == nil
     if $max_widths.fetch(i, -1) < c.length then $max_widths[i] = c.length end
     case $options[:justify]
     when 'l'
@@ -146,7 +146,10 @@ def print_line(line, lnum)
       end
     end
   end
-  print "\n" rescue return
+  puts
+rescue
+  STDERR.puts 'vl: Pipe ended while writing.'
+  abort
 end
 
 cached_lines.each.with_index do |line, lnum|
