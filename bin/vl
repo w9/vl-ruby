@@ -78,21 +78,15 @@ end
 
 opts.parse!
 
-if ARGV.empty?
-  puts 'Error: No filename found.'
-  puts opts
-  abort
-else
-  file_name = ARGV[0]
-end
-
-if !File.exists? file_name
-  abort "Error: file \"#{file_name}\" not found."
-end
+#if ARGF
+#  puts 'Error: No filename found.'
+#  puts opts
+#  abort
+#end
 
 max_widths = []
 
-file = open file_name
+file = ARGF.file
 
 file.each_line.with_index.reduce 0 do |pnum, (line, lnum)|
   next pnum if lnum < options[:skip] or line =~ options[:comment]
