@@ -10,7 +10,8 @@ $options = {
   :skip => 0,
   :comment => /^#/,
   :probe_lines => 100,
-  :justify => 'l'
+  :justify => 'l',
+  :quote => "\x00"
 }
 
 
@@ -75,9 +76,15 @@ opts = OptionParser.new do |opts|
     begin
       $options[:comment] = Regexp.new(c)
     rescue
-      puts 'Warning: Problems encountered when processing the regex.'
-      puts "Warning: Default value \"#{$options[:comment].source}\" is used."
+      STDERR.puts 'Warning: Problems encountered when processing the regex.'
+      STDERR.puts "Warning: Default value \"#{$options[:comment].source}\" is used."
     end
+  end
+
+  opts.on('-q', '--quote [QUOTE_CHAR]',
+          'character of quote',
+          '  default: \x00' do |q|
+    $options[:quote] = q
   end
 end
 
@@ -104,7 +111,7 @@ cached_lines = []
 ARGF.each_line.with_index.reduce 0 do |pnum, (line, lnum)|
   cached_lines.push(line)
   next pnum if lnum < $options[:skip] or line =~ $options[:comment]
-  parsed_line = CSV.parse_line(line, {:col_sep=>$options[:separator]})
+  parsed_line = CSV.parse_line(line, {:col_sep=>$options[:separator], :quote_char=>$options[:quote]})
   # damn you, 'csv' package!
   parsed_line = [] if parsed_line == nil
   parsed_line.each_with_index do |c, i|
@@ -123,7 +130,7 @@ def print_line(line, lnum)
     print line
     return
   end
-  parsed_line = CSV.parse_line(line, {:col_sep=>$options[:separator]})
+  parsed_line = CSV.parse_line(line, {:col_sep=>$options[:separator], :quote_char=>$options[:quote]})
   # damn you, 'csv' package!
   parsed_line = [] if parsed_line == nil
   parsed_line.each_with_index do |c, i|
