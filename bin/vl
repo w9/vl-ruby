@@ -83,7 +83,7 @@ opts = OptionParser.new do |opts|
 
   opts.on('-q', '--quote [QUOTE_CHAR]',
           'character of quote',
-          '  default: \x00' do |q|
+          '  default: \x00') do |q|
     $options[:quote] = q
   end
 end
