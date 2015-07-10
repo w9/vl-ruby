@@ -2,35 +2,36 @@
 begin
 
 require 'optparse'
+require 'colorize'
 require 'csv'
 
 $options = {
-  :separator => "",
   :padding => 1,
   :skip => 0,
   :comment => /^#/,
   :probe_lines => 100,
   :justify => 'l',
-  :quote => "\x00"
 }
+
 
 
 opts = OptionParser.new do |opts|
   opts.program_name = '(V)iew (L)arge table'
   opts.version = '20150113'
+  opts.set_summary_indent '    '
+  opts.set_summary_width 25
 
-  opts.banner = '(V)iew (L)arge table: lightning fast table formatter'
   opts.separator ''
-  opts.separator '   output to stdout:'
-  opts.separator '       vl FILENAME [options]'
-  opts.separator '   pipe to less:'
-  opts.separator '       vll FILENAME [options]'
+  opts.separator '/==============================================================================\\'
   opts.separator ''
-  opts.separator 'Options:'
+  opts.separator '  (' + 'V'.bold.blue + ')iew (' + 'L'.bold.yellow + ')arge table: lightning fast table formatter'
+  opts.separator ''
+  opts.separator '  output to stdout: ' + 'vl FILENAME [options]'.green
+  opts.separator '  pipe to less: ' + 'vll FILENAME [options]'.green
+  opts.separator ''
+  opts.separator '  Options:'
 
-  opts.on('-s', '--separator [REGEX]',
-          'char or string to match the separator',
-          '  default: "," (if csv, "\t")') do |s|
+  opts.on('-s', '--separator <REGEX>', 'char or string to match the separator [\t]') do |s|
     begin
       options[:separator] = Regexp.new(s)
     rescue
@@ -39,29 +40,19 @@ opts = OptionParser.new do |opts|
     end
   end
 
-  opts.on('-p', '--padding [NUM_OF_SPACES]',
-          'number of spaces that separate the columns',
-          '  default: 1') do |p|
+  opts.on('-p', '--padding <INT>', 'number of spaces that separate the columns [1]') do |p|
     $options[:padding] = p.to_i
   end
 
-  opts.on('-k', '--skip [NUM_OF_LINES]',
-          'number of top lines to skip',
-          '  default: 0') do |k|
+  opts.on('-k', '--skip <INT>', 'number of top lines to skip [0]') do |k|
     $options[:skip] = k.to_i
   end
 
-  opts.on('-p', '--probe-lines [NUM_OF_LINES]',
-          'number of top lines used for fast estimation',
-          '  default: 100') do |p|
+  opts.on('-p', '--probe-lines <INT>', 'number of top lines used for estimation [100]') do |p|
     $options[:probe_lines] = p.to_i
   end
 
-  opts.on('-j', '--justify [CODE]',
-          'justification mode for cells',
-          '  auto will only right-justify numbers',
-          '  options: l = left, r = right, a = auto',
-          '  default: l') do |j|
+  opts.on('-j', '--justify {l|r|a}', 'justification mode for cells (l/r/a) [l]') do |j|
     if ['l', 'r', 'a'].include?(j[0])
       $options[:justify] = j[0]
     else
@@ -70,9 +61,7 @@ opts = OptionParser.new do |opts|
     end
   end
           
-  opts.on('-c', '--comment [REGEX]',
-          'regex to match lines to ignore',
-          '  default: ^#') do |c|
+  opts.on('-c', '--comment <REGEX>', 'regex to match lines to ignore [^#]') do |c|
     begin
       $options[:comment] = Regexp.new(c)
     rescue
@@ -81,23 +70,34 @@ opts = OptionParser.new do |opts|
     end
   end
 
-  opts.on('-q', '--quote [QUOTE_CHAR]',
-          'character of quote',
-          '  default: \x00') do |q|
+  opts.on('-q', '--quote <CHAR>', 'character of quote [\x00]') do |q|
     $options[:quote] = q
   end
+
+  opts.separator ''
+  opts.separator '\==============================================================================/'
+  opts.separator ''
 end
 
 opts.parse!
 
-#default separator
-if $options[:separator] == ''
+
+if !$options[:separator]
   if ARGF.filename =~ /.*\.csv/
     $options[:separator] = ','
   else
     $options[:separator] = "\t"
   end
 end
+
+if !$options[:quote]
+  if ARGF.filename =~ /.*\.csv/
+    $options[:quote] = '"'
+  else
+    $options[:quote] = "\x00"
+  end
+end
+
 
 #------#
 # Main #
