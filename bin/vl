@@ -1,4 +1,8 @@
 #!/usr/bin/env ruby
+
+#TODO: add column colors
+#TODO: chop long columns (option)
+
 begin
 
 require 'optparse'
@@ -11,6 +15,8 @@ $options = {
   :comment => /^#/,
   :probe_lines => 100,
   :justify => 'l',
+  :alternate_color => false,
+  :chop_length => 1024,
 }
 
 
@@ -18,7 +24,7 @@ $options = {
 opts = OptionParser.new do |opts|
   opts.set_banner ''
   opts.set_summary_indent '    '
-  opts.set_summary_width 25
+  opts.set_summary_width 28
 
   opts.separator '/==============================================================================\\'
   opts.separator ''
@@ -46,7 +52,7 @@ opts = OptionParser.new do |opts|
     $options[:skip] = k.to_i
   end
 
-  opts.on('-p', '--probe-lines <INT>', 'number of top lines used for estimation [100]') do |p|
+  opts.on('-g', '--probe-lines <INT>', 'number of top lines used for estimation [100]') do |p|
     $options[:probe_lines] = p.to_i
   end
 
@@ -70,6 +76,14 @@ opts = OptionParser.new do |opts|
 
   opts.on('-q', '--quote <CHAR>', 'character of quote [\x00]') do |q|
     $options[:quote] = q
+  end
+
+  opts.on('-z', '--[no-]alternative-color', 'use alternative colors [no]') do |c|
+    $options[:alternate_color] = c
+  end
+
+  opts.on('-l', '--chop-length <INT>', 'chop columns longer than this length [1024]') do |l|
+    $options[:chop_length] = l.to_i
   end
 
   opts.separator ''
@@ -134,19 +148,32 @@ def print_line(line, lnum)
   parsed_line.each_with_index do |c, i|
     # damn you, 'csv' package!
     c = '' if c == nil
-    if $max_widths.fetch(i, -1) < c.length then $max_widths[i] = c.length end
-    case $options[:justify]
-    when 'l'
-      print c.ljust($max_widths[i] + $options[:padding]) rescue break
-    when 'r'
-      print c.rjust($max_widths[i] + $options[:padding]) rescue break
-    when 'a'
-      begin
-        if Float(c) then print c.rjust($max_widths[i] + $options[:padding]) end
-      rescue
-        print c.ljust($max_widths[i] + $options[:padding])
-      end
+
+    if $max_widths.fetch(i, -1) < c.length then
+      $max_widths[i] = c.length
     end
+
+    c = c[0..$options[:chop_length]]
+    $max_widths[i] = [$options[:chop_length], $max_widths[i]].min
+
+    case $options[:justify]
+      when 'l'
+        c = c.ljust($max_widths[i] + $options[:padding]) rescue break
+      when 'r'
+        c = c.rjust($max_widths[i] + $options[:padding]) rescue break
+      when 'a'
+        begin
+          if Float(c) then c = c.rjust($max_widths[i] + $options[:padding]) end
+        rescue
+          c = c.ljust($max_widths[i] + $options[:padding])
+        end
+      end
+
+    if $options[:alternate_color] then
+      c = c.colorize([:yellow, :blue][i % 2])
+    end
+
+    print c
   end
   puts
 rescue
