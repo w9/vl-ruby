@@ -129,6 +129,7 @@ ARGF.each_line.with_index.reduce 0 do |pnum, (line, lnum)|
   parsed_line.each_with_index do |c, i|
     # damn you, 'csv' package!
     c = '' if c == nil
+    c = c.inspect[1..-2]
     # -1 because it's possible that c is empty and i is out of range
     if $max_widths.fetch(i, -1) < c.length then $max_widths[i] = c.length end
   end
@@ -148,6 +149,7 @@ def print_line(line, lnum)
   parsed_line.each_with_index do |c, i|
     # damn you, 'csv' package!
     c = '' if c == nil
+    c = c.inspect[1..-2]
 
     if $max_widths.fetch(i, -1) < c.length then
       $max_widths[i] = c.length
