@@ -11,6 +11,7 @@ require 'csv'
 
 $options = {
   :padding => 1,
+  :quote => '"',
   :skip => 0,
   :comment => /^#/,
   :probe_lines => 100,
