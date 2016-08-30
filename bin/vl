@@ -18,6 +18,7 @@ $options = {
   :justify => 'l',
   :alternate_color => false,
   :chop_length => 1024,
+  :max_n_cols => 200,
 }
 
 
@@ -78,6 +79,10 @@ opts = OptionParser.new do |opts|
     $options[:alternate_color] = c
   end
 
+  opts.on('-m', '--max-num-cols <INT>', 'the maximum number of columns to show [200]') do |m|
+    $options[:max_n_cols] = m.to_i
+  end
+
   opts.on('-l', '--chop-length <INT>', 'chop columns longer than this length [1024]') do |l|
     $options[:chop_length] = l.to_i
   end
@@ -134,6 +139,12 @@ def print_line(line, lnum)
   # damn you, 'csv' package!
   parsed_line = [] if parsed_line == nil
   parsed_line.each_with_index do |c, i|
+    break if i > $options[:max_n_cols]
+    if i == $options[:max_n_cols] then
+      print "... #{parsed_line.size - i} more columns"
+      break
+    end
+
     # damn you, 'csv' package!
     c = '' if c == nil
     c = c.inspect[1..-2]
