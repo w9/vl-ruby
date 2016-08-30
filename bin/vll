@@ -2,4 +2,4 @@
 
 require 'shellwords'
 
-exec "vl -z #{ARGV.shelljoin} | less -S"
+exec "vl -z #{ARGV.shelljoin} | less -RS"
