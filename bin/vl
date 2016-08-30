@@ -36,13 +36,8 @@ opts = OptionParser.new do |opts|
   opts.separator ''
   opts.separator '  Options:'
 
-  opts.on('-s', '--separator <REGEX>', 'char or string to match the separator [\t]') do |s|
-    begin
-      options[:separator] = Regexp.new(s)
-    rescue
-      puts 'Warning: Problems encountered when processing the regex.'
-      puts "Warning: Default value \"#{$options[:separator].source}\" is used."
-    end
+  opts.on('-s', '--separator <REGEX>', 'char or string to match the separator [auto]') do |s|
+    $options[:separator] = s
   end
 
   opts.on('-p', '--padding <INT>', 'number of spaces that separate the columns [1]') do |p|
@@ -75,7 +70,7 @@ opts = OptionParser.new do |opts|
     end
   end
 
-  opts.on('-q', '--quote <CHAR>', 'character of quote [\x00]') do |q|
+  opts.on('-q', '--quote <CHAR>', 'character of quote ["]') do |q|
     $options[:quote] = q
   end
 
@@ -102,15 +97,6 @@ if !$options[:separator]
     $options[:separator] = "\t"
   end
 end
-
-if !$options[:quote]
-  if ARGF.filename =~ /.*\.csv/
-    $options[:quote] = '"'
-  else
-    $options[:quote] = "\x00"
-  end
-end
-
 
 #------#
 # Main #
