@@ -151,6 +151,7 @@ def print_row(row)
   puts
 rescue Errno::EPIPE => e
   STDERR.puts 'Pipe ended while writing.'
+  abort
 end
 
 (1..1.0/0).each do |i|
