@@ -107,90 +107,6 @@ end
 #------#
 
 
-#$max_widths = []
-#
-##==== line caching ====#
-#cached_lines = []
-#ARGF.each_line.with_index.reduce 0 do |pnum, (line, lnum)|
-#  cached_lines.push(line)
-#  next pnum if lnum < $options[:skip] or line =~ $options[:comment]
-#  parsed_line = CSV.parse_line(line, {:col_sep=>$options[:separator], :quote_char=>$options[:quote]})
-#  # damn you, 'csv' package!
-#  parsed_line = [] if parsed_line == nil
-#  parsed_line.each_with_index do |c, i|
-#    # damn you, 'csv' package!
-#    c = '' if c == nil
-#    c = c.inspect[1..-2]
-#    # -1 because it's possible that c is empty and i is out of range
-#    if $max_widths.fetch(i, -1) < c.length then $max_widths[i] = c.length end
-#  end
-#  (pnum += 1) < $options[:probe_lines] ? pnum : break
-#end
-##======================#
-#
-#
-#def print_line(line, lnum)
-#  if lnum < $options[:skip] or line =~ $options[:comment] then
-#    print line
-#    return
-#  end
-#  parsed_line = CSV.parse_line(line, {:col_sep=>$options[:separator], :quote_char=>$options[:quote]})
-#  # damn you, 'csv' package!
-#  parsed_line = [] if parsed_line == nil
-#  parsed_line.each_with_index do |c, i|
-#    break if i > $options[:max_n_cols]
-#    if i == $options[:max_n_cols] then
-#      print "... #{parsed_line.size - i} more columns"
-#      break
-#    end
-#
-#    # damn you, 'csv' package!
-#    c = '' if c == nil
-#    c = c.inspect[1..-2]
-#
-#    if $max_widths.fetch(i, -1) < c.length then
-#      $max_widths[i] = c.length
-#    end
-#
-#    c = c[0..$options[:chop_length]]
-#    $max_widths[i] = [$options[:chop_length], $max_widths[i]].min
-#
-#    case $options[:justify]
-#      when 'l'
-#        c = c.ljust($max_widths[i] + $options[:padding]) rescue break
-#      when 'r'
-#        c = c.rjust($max_widths[i] + $options[:padding]) rescue break
-#      when 'a'
-#        begin
-#          if Float(c) then c = c.rjust($max_widths[i] + $options[:padding]) end
-#        rescue
-#          c = c.ljust($max_widths[i] + $options[:padding])
-#        end
-#      end
-#
-#    if $options[:alternate_color] then
-#      c = c.colorize([:yellow, :blue][i % 2])
-#    end
-#
-#    print c
-#  end
-#  puts
-#rescue
-#  STDERR.puts 'vl: Pipe ended while writing.'
-#  abort
-#end
-#
-#cached_lines.each.with_index do |line, lnum|
-#  print_line(line, lnum)
-#end
-#
-#ARGF.each_line.with_index do |line, lnum|
-#  print_line(line, lnum)
-#end
-
-
-
-
 #==== new version ===#
 
 $cached_lines = []
@@ -233,10 +149,8 @@ def print_row(row)
     print c
   end
   puts
-#rescue Exception => e
-#  #STDERR.puts 'vl: Pipe ended while writing.'
-#  pp e
-#  throw e
+rescue Errno::EPIPE => e
+  STDERR.puts 'Pipe ended while writing.'
 end
 
 (1..1.0/0).each do |i|
