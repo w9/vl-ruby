@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = "vll"
-  spec.version       = "0.1.16"
+  spec.version       = "0.1.17"
   spec.authors       = ["xzhu"]
   spec.email         = ["zhuxun2@gmail.com"]
   spec.homepage      = 'https://github.com/w9/vll'

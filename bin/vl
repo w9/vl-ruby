@@ -18,6 +18,8 @@ $options = {
   :chop_length => 1024,
   :max_n_cols => 200,
   :return_char => ["\n", "\r", "\r\n"],
+  :color_1 => :yellow,
+  :color_2 => :blue,
 }
 
 
@@ -86,6 +88,14 @@ opts = OptionParser.new do |opts|
     $options[:chop_length] = l.to_i
   end
 
+  opts.on('--color-1 <INT>', 'color #1 in the color palette [yellow]') do |c|
+    $options[:color_1] = c.to_sym
+  end
+
+  opts.on('--color-2 <INT>', 'color #2 in the color palette [blue]') do |c|
+    $options[:color_2] = c.to_sym
+  end
+
   opts.separator ''
   opts.separator '\==============================================================================/'
   opts.separator ''
@@ -143,7 +153,7 @@ def print_row(row)
       end
 
     if $options[:alternate_color] then
-      c = c.colorize([:yellow, :blue][i % 2])
+      c = c.colorize([$options[:color_1], $options[:color_2]][i % 2])
     end
 
     print c
